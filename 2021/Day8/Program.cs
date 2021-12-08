@@ -9,9 +9,11 @@ Console.WriteLine($"Part 1: {part1}");
 
 var part2 = input
     .DecodeDisplays()
+    .ReadDisplays()
     .Sum();
 
 Console.WriteLine($"Part 2: {part2}");
+
 static class Extensions
 {
     public static IEnumerable<(IEnumerable<string> patterns, IEnumerable<string> output)> Displays(this IEnumerable<string> lines)
@@ -23,19 +25,17 @@ static class Extensions
         }
     }
 
-    public static IEnumerable<int> DecodeDisplays(this IEnumerable<(IEnumerable<string> patterns, IEnumerable<string> output)> displays)
+    public static IEnumerable<char[][]> DecodeDisplays(this IEnumerable<(IEnumerable<string> signalPatterns, IEnumerable<string> output)> displays)
     {
         foreach (var display in displays)
         {
-            var solutions = display.patterns.FindSolutionsByCount();
-            var decoded = display.output.Select(x => x.DecodeValue(solutions)).ToArray();
-            yield return decoded.ReadDisplay();
+            var solutions = display.signalPatterns.FindSolutionsByCount();
+            yield return display.output.Select(x => x.DecodeValue(solutions)).ToArray();
         }
     }
 
     public static (char coded, char actual)[] FindSolutionsByCount(this IEnumerable<string> patterns)
     {
-        //var remaining = patterns.Select(x => solutions.SelectMany(s => x.Replace(s.error, 'x')));
         var totals = patterns.SelectMany(x => x).GroupBy(x => x).Select(gp => (gp.Key, gp.Count()));
         var b = (totals.First(x => x.Item2 == 6).Key, 'b');
         var e = (totals.First(x => x.Item2 == 4).Key, 'e');
@@ -50,7 +50,11 @@ static class Extensions
     {
         return s.Select(x => solutions.Where(s => s.coded == x).First().actual).ToArray();
     }
-    public static int ReadDisplay(this char[][] decoded)
+    public static IEnumerable<int> ReadDisplays(this IEnumerable<char[][]> decoded)
+    {
+        return decoded.Select(ReadDisplay);
+    }
+    public static int ReadDisplay(char[][] decoded)
     {
         int value = 0;
         value += decoded[0].ReadValue() * 1000;
@@ -64,7 +68,6 @@ static class Extensions
     {
         return TrueSegments.Select((s, i) => (s.SetEquals(str), i)).First(x => x.Item1).i;
     }
-
 
     public static HashSet<char>[] TrueSegments = new HashSet<char>[]
     {
